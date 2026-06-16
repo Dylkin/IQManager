@@ -43,11 +43,12 @@ import { Subscription, interval } from 'rxjs';
                 <th>Ссылка</th>
                 <th style="width: 100px;">Статус</th>
                 <th style="width: 120px;">Время</th>
+                <th style="width: 160px;">Действия</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngIf="telegramMessages.length === 0">
-                <td colspan="5" class="text-center text-muted py-4">Нет сообщений за сегодня</td>
+                <td colspan="6" class="text-center text-muted py-4">Нет сообщений за сегодня</td>
               </tr>
               <tr *ngFor="let msg of telegramMessages">
                 <td class="text-muted">#{{ msg.messageId }}</td>
@@ -62,6 +63,14 @@ import { Subscription, interval } from 'rxjs';
                   <span class="badge" [ngClass]="STATUS_CLASSES[msg.status] || 'bg-secondary'">{{ STATUS_LABELS[msg.status] || msg.status }}</span>
                 </td>
                 <td class="small text-muted">{{ msg.createdAt | date:'HH:mm' }}</td>
+                <td>
+                  <button *ngIf="msg.extractedUrl && msg.status !== 'PROCESSED'" class="btn btn-sm btn-primary" (click)="processTelegramMessage(msg.messageId)" [disabled]="processingMessageId === msg.messageId">
+                    <span *ngIf="processingMessageId === msg.messageId" class="spinner-border spinner-border-sm me-1" role="status"></span>
+                    <span *ngIf="processingMessageId !== msg.messageId">Создать тендер</span>
+                  </button>
+                  <span *ngIf="msg.status === 'PROCESSED'" class="badge bg-success">Тендер создан</span>
+                  <span *ngIf="!msg.extractedUrl" class="text-muted small">Нет ссылки</span>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -159,6 +168,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   telegramMessages: TelegramMessage[] = [];
   loadingTelegram = false;
   showTelegramSection = false;
+  processingMessageId: number | null = null;
 
   statCards: { label: string; value: number; color: string; icon: string }[] = [];
 
@@ -252,6 +262,28 @@ export class DashboardComponent implements OnInit, OnDestroy {
   reprocess(event: Event, id: number) {
     event.stopPropagation();
     this.tenderService.reprocessTender(id).subscribe(() => this.loadTenders());
+  }
+
+  processTelegramMessage(messageId: number) {
+    this.processingMessageId = messageId;
+    this.tenderService.processTelegramMessage(messageId).subscribe({
+      next: (result) => {
+        this.processingMessageId = null;
+        if (result.status === 'Tender already processed') {
+          alert('Тендер уже был обработан ранее');
+        } else if (result.tenderId) {
+          alert(`Тендер создан (ID: ${result.tenderId}). Поиск поставщиков запущен в фоновом режиме.`);
+        } else {
+          alert('Статус: ' + result.status);
+        }
+        this.fetchFromTelegram();
+        this.loadTenders();
+      },
+      error: (err) => {
+        this.processingMessageId = null;
+        alert('Ошибка обработки сообщения: ' + (err.error?.message || err.message || 'Неизвестная ошибка'));
+      }
+    });
   }
 
   deleteTender(event: Event, id: number) {

@@ -165,6 +165,10 @@ export class TenderService {
     return this.http.post<TelegramMessage[]>(`${this.apiUrl}/telegram/fetch-today`, {});
   }
 
+  processTelegramMessage(messageId: number): Observable<{ status: string; tenderId?: number; url?: string }> {
+    return this.http.post<{ status: string; tenderId?: number; url?: string }>(`${this.apiUrl}/telegram/process-message/${messageId}`, {});
+  }
+
   // Users CRUD (admin)
   getUsers(): Observable<User[]> {
     return this.http.get<User[]>(`${this.apiUrl}/users`);
