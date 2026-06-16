@@ -1,0 +1,48 @@
+# Compiled output
+java-backend/target/
+frontend/dist/
+frontend/.angular/
+frontend/tmp/
+frontend/out-tsc/
+
+# Dependencies
+frontend/node_modules/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Application data
+java-backend/data/
+java-backend/documents/
+java-backend/logs/
+*.log
+
+# Database
+*.mv.db
+*.trace.db
+
+# Build artifacts
+*.jar
+!java-backend/target/*.jar
+
+# Environment
+.env
+.env.local
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# Misc
+*.zip
+*.tar.gz
