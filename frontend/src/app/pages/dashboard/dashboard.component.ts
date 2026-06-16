@@ -135,6 +135,9 @@ import { Subscription, interval } from 'rxjs';
                   <button class="btn btn-sm btn-link" (click)="reprocess($event, tender.id)">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
                   </button>
+                  <button class="btn btn-sm btn-link text-danger" (click)="deleteTender($event, tender.id)" title="Удалить тендер">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                  </button>
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </div>
               </div>
@@ -249,5 +252,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
   reprocess(event: Event, id: number) {
     event.stopPropagation();
     this.tenderService.reprocessTender(id).subscribe(() => this.loadTenders());
+  }
+
+  deleteTender(event: Event, id: number) {
+    event.stopPropagation();
+    if (!confirm('Вы уверены, что хотите удалить этот тендер?')) {
+      return;
+    }
+    this.tenderService.deleteTender(id).subscribe({
+      next: () => this.loadTenders(),
+      error: (err) => alert('Ошибка удаления: ' + (err.error?.message || err.message || 'Неизвестная ошибка'))
+    });
   }
 }

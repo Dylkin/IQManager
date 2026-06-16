@@ -10,4 +10,5 @@ import java.util.List;
 public interface FoundModelEmailRepository extends JpaRepository<FoundModelEmail, Long> {
     List<FoundModelEmail> findByFoundModelIdOrderByCreatedAtDesc(Long foundModelId);
     boolean existsByMessageId(String messageId);
+    void deleteByFoundModelIdIn(List<Long> foundModelIds);
 }

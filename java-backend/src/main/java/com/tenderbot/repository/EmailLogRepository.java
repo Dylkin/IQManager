@@ -12,4 +12,5 @@ public interface EmailLogRepository extends JpaRepository<EmailLog, Long> {
     List<EmailLog> findByTenderItemId(Long tenderItemId);
     List<EmailLog> findByStatus(EmailStatus status);
     List<EmailLog> findTop50ByOrderByCreatedAtDesc();
+    void deleteByTenderItemIdIn(List<Long> tenderItemIds);
 }

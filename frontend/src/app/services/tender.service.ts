@@ -37,6 +37,10 @@ export class TenderService {
     return this.http.post<void>(`${this.apiUrl}/tenders/${id}/reprocess`, {});
   }
 
+  deleteTender(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/tenders/${id}`);
+  }
+
   updateItemDocumentDescription(tenderId: number, itemId: number, documentDescription: string): Observable<TenderItem> {
     return this.http.put<TenderItem>(`${this.apiUrl}/tenders/${tenderId}/items/${itemId}/document-description`, {
       documentDescription

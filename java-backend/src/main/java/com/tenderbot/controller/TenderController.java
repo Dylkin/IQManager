@@ -13,6 +13,7 @@ import com.tenderbot.entity.*;
 import com.tenderbot.repository.*;
 import com.tenderbot.service.*;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +27,8 @@ public class TenderController {
     private final TenderRepository tenderRepository;
     private final TenderItemRepository tenderItemRepository;
     private final FoundModelRepository foundModelRepository;
+    private final FoundModelEmailRepository foundModelEmailRepository;
+    private final EmailLogRepository emailLogRepository;
     private final TenderOrchestrationService orchestrationService;
     private final LoggingService loggingService;
     private final SupplierSearchService supplierSearchService;
@@ -35,6 +38,8 @@ public class TenderController {
 
     public TenderController(TenderRepository tenderRepository, TenderItemRepository tenderItemRepository,
                             FoundModelRepository foundModelRepository,
+                            FoundModelEmailRepository foundModelEmailRepository,
+                            EmailLogRepository emailLogRepository,
                             TenderOrchestrationService orchestrationService, LoggingService loggingService,
                             SupplierSearchService supplierSearchService,
                             ParameterExtractionService parameterExtractionService,
@@ -42,6 +47,8 @@ public class TenderController {
         this.tenderRepository = tenderRepository;
         this.tenderItemRepository = tenderItemRepository;
         this.foundModelRepository = foundModelRepository;
+        this.foundModelEmailRepository = foundModelEmailRepository;
+        this.emailLogRepository = emailLogRepository;
         this.orchestrationService = orchestrationService;
         this.loggingService = loggingService;
         this.supplierSearchService = supplierSearchService;
@@ -77,6 +84,37 @@ public class TenderController {
     @PostMapping("/{id}/reprocess")
     public ResponseEntity<Void> reprocessTender(@PathVariable Long id) {
         orchestrationService.reprocessTender(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}")
+    @Transactional
+    public ResponseEntity<Void> deleteTender(@PathVariable Long id) {
+        var tenderOpt = tenderRepository.findByIdWithItems(id);
+        if (tenderOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Tender tender = tenderOpt.get();
+
+        List<Long> itemIds = tender.getItems().stream()
+                .map(TenderItem::getId)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+
+        List<Long> foundModelIds = tender.getItems().stream()
+                .flatMap(item -> item.getFoundModels().stream())
+                .map(FoundModel::getId)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+
+        if (!foundModelIds.isEmpty()) {
+            foundModelEmailRepository.deleteByFoundModelIdIn(foundModelIds);
+        }
+        if (!itemIds.isEmpty()) {
+            emailLogRepository.deleteByTenderItemIdIn(itemIds);
+        }
+
+        tenderRepository.delete(tender);
         return ResponseEntity.ok().build();
     }
 
